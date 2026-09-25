@@ -1,5 +1,3 @@
-package ru.student.labs.lab01;
-
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
@@ -15,11 +13,6 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Main lab = new Main();
-
-        System.out.println("Губайдулин Егор");
-        System.out.println("Группа ИТ-18, 2 курс");
-        System.out.println("Языки программирования Java");
-        System.out.println("Лабораторная работа №1, вариант 2");
 
         while(true) {
             System.out.println("1 — Методы");
