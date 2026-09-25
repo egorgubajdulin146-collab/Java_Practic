@@ -106,22 +106,27 @@ public class Main {
     // Задание 1
 
     public boolean isUpperCase(char x) {
+
         return x >= 'A' && x <= 'Z';
     }
 
     public boolean isInRange(int a, int b, int num) {
+
         return (num >= a && num <= b) || (num >= b && num <= a);
     }
 
     public boolean isDivisor(int a, int b) {
+
         return (a != 0 && b % a == 0) || (b != 0 && a % b == 0);
     }
 
     public boolean isEqual(int a, int b, int c) {
+
         return a == b && b == c;
     }
 
     public int lastNumSum(int a, int b) {
+
         return Math.abs(a % 10) + Math.abs(b % 10);
     }
 
