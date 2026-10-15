@@ -7,6 +7,8 @@
 ## Структура проекта
 
 - `src/main/java/ru/student/labs/lab01/Main.java` — лабораторная работа №1;
-- `labs/lab01.md` — отчёт по лабораторной работе №1.
+- `labs/lab01.md` — отчёт по лабораторной работе №1;
+- `src/main/java/ru/student/labs/lab02/Main.java` — лабораторная работа №2;
+- `labs/lab02.md` — отчёт по лабораторной работе №2.
 
 
