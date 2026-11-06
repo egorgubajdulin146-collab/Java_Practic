@@ -2,13 +2,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 
-/*
- * Студент: Губайдулин Егор
- * Группа: ИТ-18
- * Курс: 2
- * Дисциплина: Языки программирования Java
- * Лабораторная работа №1, вариант 2
- */
+
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -46,7 +40,7 @@ public class Main {
                     break;
 
                 case 2:
-                    System.out.println(lab.sum3(5, 7, 2));
+                    System.out.println(lab.sum3(3, 1, 2));
                     System.out.println(lab.sum2(5, 7));
                     System.out.println(lab.age(31));
                     System.out.println(lab.day(5));

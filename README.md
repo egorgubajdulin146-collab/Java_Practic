@@ -8,7 +8,8 @@
 
 - `src/main/java/ru/student/labs/lab01/Main.java` — лабораторная работа №1;
 - `labs/lab01.md` — отчёт по лабораторной работе №1;
-- `src/main/java/ru/student/labs/lab02/Main.java` — лабораторная работа №2;
+- `src/main/java/ru/student/labs/lab02/Main.java` — меню и ввод для лабораторной работы №2;
+- `src/main/java/ru/student/labs/lab02/` — отдельные файлы классов `SimplePerson`, `FullName`, `Person`, `City` и `Fraction`;
 - `labs/lab02.md` — отчёт по лабораторной работе №2.
 
 

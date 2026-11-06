@@ -1,7 +1,6 @@
 package ru.student.labs.lab02;
 
-import java.math.BigInteger;
-import java.util.*;
+import java.util.Scanner;
 
 public class Main {
     private static final Scanner IN = new Scanner(System.in);
@@ -22,15 +21,26 @@ public class Main {
                 if (task == 0) break;
                 int mode = readInt("1 — пример из задания, 2 — свой ввод: ", 1, 2);
                 switch (task) {
-                    case 1 -> people(mode == 1);
-                    case 2 -> names(mode == 1);
-                    case 3 -> namedPeople(mode == 1);
-                    case 4, 5 -> cities(mode == 1);
-                    case 6 -> fractions(mode == 1);
+                    case 1:
+                        people(mode == 1);
+                        break;
+                    case 2:
+                        names(mode == 1);
+                        break;
+                    case 3:
+                        namedPeople(mode == 1);
+                        break;
+                    case 4:
+                    case 5:
+                        cities(mode == 1);
+                        break;
+                    case 6:
+                        fractions(mode == 1);
+                        break;
                 }
             }
-        } catch (NoSuchElementException ex) {
-            System.out.println("\nВвод завершён.");
+        } catch (IllegalStateException ex) {
+            System.out.println("\n" + ex.getMessage());
         }
         System.out.println("Программа завершена.");
     }
@@ -38,6 +48,7 @@ public class Main {
     // Ввод строки с клавиатуры.
     private static String line(String prompt) {
         System.out.print(prompt);
+        if (!IN.hasNextLine()) throw new IllegalStateException("Ввод завершён.");
         return IN.nextLine().strip();
     }
 
@@ -45,9 +56,11 @@ public class Main {
     private static String readText(String prompt) {
         while (true) {
             String value = line(prompt);
-            if (!value.isBlank() && value.codePoints().noneMatch(Character::isISOControl)) {
-                return value;
+            boolean correct = !value.isBlank();
+            for (int i = 0; i < value.length(); i++) {
+                if (Character.isISOControl(value.charAt(i))) correct = false;
             }
+            if (correct) return value;
             System.out.println("Введите непустой текст без управляющих символов.");
         }
     }
@@ -61,19 +74,6 @@ public class Main {
             } catch (NumberFormatException ignored) {
             }
             System.out.printf("Введите целое число от %d до %d.%n", min, max);
-        }
-    }
-
-    // Ввод большого целого числа с проверкой на ноль, если он запрещён.
-    private static BigInteger readBigInteger(String prompt, boolean nonZero) {
-        while (true) {
-            try {
-                BigInteger value = new BigInteger(line(prompt));
-                if (!nonZero || value.signum() != 0) return value;
-                System.out.println("Здесь ноль недопустим.");
-            } catch (NumberFormatException ex) {
-                System.out.println("Введите целое число, например: -12, 0 или 25.");
-            }
         }
     }
 
@@ -151,10 +151,9 @@ public class Main {
             City c = new City("C");
             City d = new City("D");
             City e = new City("E");
-            Map<City, Integer> routes = new LinkedHashMap<>();
-            routes.put(b, 1);
-            routes.put(e, 2);
-            City f = new City("F", routes);
+            City[] neighbors = {b, e};
+            int[] costs = {1, 2};
+            City f = new City("F", neighbors, costs);
             a.addRoute(b, 5);
             a.addRoute(f, 1);
             a.addRoute(d, 6);
@@ -168,51 +167,78 @@ public class Main {
             e.addRoute(f, 2);
             System.out.println("Схема из PDF. Учитываются направления стрелок.");
             System.out.println("A–E созданы по названию, F — по названию и набору путей.");
-            for (City city : List.of(a, b, c, d, e, f)) System.out.println(city);
+            City[] cities = {a, b, c, d, e, f};
+            for (int i = 0; i < cities.length; i++) {
+                System.out.println(cities[i]);
+            }
             return;
         }
 
         int count = readInt("Количество городов (1–100): ", 1, 100);
-        List<City> cities = new ArrayList<>();
-        Set<String> usedNames = new HashSet<>();
-        while (cities.size() < count) {
-            String name = readText("Название города №" + (cities.size() + 1) + ": ");
-            if (!usedNames.add(name.toLowerCase(Locale.ROOT))) {
-                System.out.println("Город с таким названием уже есть.");
-                continue;
+        City[] cities = new City[count];
+        for (int i = 0; i < count; i++) {
+            while (true) {
+                String name = readText("Название города №" + (i + 1) + ": ");
+                boolean duplicate = false;
+                for (int j = 0; j < i; j++) {
+                    if (cities[j].getName().equalsIgnoreCase(name)) duplicate = true;
+                }
+                if (duplicate) {
+                    System.out.println("Город с таким названием уже есть.");
+                } else {
+                    cities[i] = new City(name);
+                    break;
+                }
             }
-            cities.add(new City(name));
         }
         System.out.println("Пути направленные. Обратный путь вводится отдельно.");
         for (int i = 0; i < count; i++) {
-            System.out.println((i + 1) + " — " + cities.get(i).getName());
+            System.out.println((i + 1) + " — " + cities[i].getName());
         }
-        for (City from : cities) {
+        for (int i = 0; i < count; i++) {
+            City from = cities[i];
             int paths = readInt("Количество исходящих путей из " + from.getName() + ": ",
                     0, count - 1);
-            Set<City> destinations = new HashSet<>();
-            while (destinations.size() < paths) {
-                int index = readInt("Номер города назначения: ", 1, count) - 1;
-                City to = cities.get(index);
-                if (to == from || destinations.contains(to)) {
-                    System.out.println("Выберите другой город без повторения пути.");
-                    continue;
+            for (int j = 0; j < paths; j++) {
+                while (true) {
+                    int index = readInt("Номер города назначения: ", 1, count) - 1;
+                    City to = cities[index];
+                    if (to == from || from.hasRoute(to)) {
+                        System.out.println("Выберите другой город без повторения пути.");
+                        continue;
+                    }
+                    int cost = readInt("Стоимость (целое число, не меньше 0): ",
+                            0, Integer.MAX_VALUE);
+                    from.addRoute(to, cost);
+                    break;
                 }
-                int cost = readInt("Стоимость (целое число, не меньше 0): ",
-                        0, Integer.MAX_VALUE);
-                from.addRoute(to, cost);
-                destinations.add(to);
             }
         }
-        for (City city : cities) System.out.println(city);
+        for (int i = 0; i < count; i++) {
+            System.out.println(cities[i]);
+        }
     }
 
-    // Ввод числителя и знаменателя дроби.
+    // Ввод дроби с проверкой знаменателя и допустимого размера чисел.
     private static Fraction readFraction(String label, boolean nonZero) {
         System.out.println(label);
-        BigInteger numerator = readBigInteger("Числитель: ", nonZero);
-        BigInteger denominator = readBigInteger("Знаменатель (не 0): ", true);
-        return new Fraction(numerator, denominator);
+        while (true) {
+            int numerator = readInt("Числитель: ", Integer.MIN_VALUE, Integer.MAX_VALUE);
+            if (nonZero && numerator == 0) {
+                System.out.println("Здесь ноль недопустим.");
+                continue;
+            }
+            int denominator;
+            do {
+                denominator = readInt("Знаменатель (не 0): ", Integer.MIN_VALUE, Integer.MAX_VALUE);
+                if (denominator == 0) System.out.println("Здесь ноль недопустим.");
+            } while (denominator == 0);
+            try {
+                return new Fraction(numerator, denominator);
+            } catch (ArithmeticException ex) {
+                System.out.println(ex.getMessage() + " Введите дробь заново.");
+            }
+        }
     }
 
     // Пример или свой ввод дробей и вывод результатов всех операций.
@@ -230,230 +256,48 @@ public class Main {
             f3 = readFraction("Третья дробь f3 (не ноль для цепочки операций)", true);
             number = readInt("Целое число для операций: ", Integer.MIN_VALUE, Integer.MAX_VALUE);
         }
-        System.out.println(f1 + " + " + f2 + " = " + f1.sum(f2));
-        System.out.println(f1 + " - " + f2 + " = " + f1.minus(f2));
-        System.out.println(f1 + " * " + f2 + " = " + f1.multiply(f2));
-        try {
-            System.out.println(f1 + " / " + f2 + " = " + f1.div(f2));
-        } catch (ArithmeticException ex) {
-            System.out.println(f1 + " / " + f2 + ": " + ex.getMessage());
-        }
-        System.out.println(f1 + " + " + number + " = " + f1.sum(number));
-        System.out.println(f1 + " - " + number + " = " + f1.minus(number));
-        System.out.println(f1 + " * " + number + " = " + f1.multiply(number));
-        try {
-            System.out.println(f1 + " / " + number + " = " + f1.div(number));
-        } catch (ArithmeticException ex) {
-            System.out.println(f1 + " / " + number + ": " + ex.getMessage());
-        }
-        System.out.println("f1.sum(f2).div(f3).minus(5) = " + f1.sum(f2).div(f3).minus(5));
-        System.out.println("Исходные дроби: f1 = " + f1 + ", f2 = " + f2 + ", f3 = " + f3);
-    }
-}
-
-// Задание 1.2: имя хранится строкой.
-class SimplePerson {
-    private final String name;
-    private final int height;
-
-    // Создание человека с проверкой имени и роста.
-    public SimplePerson(String name, int height) {
-        if (name == null || name.isBlank()
-                || name.codePoints().anyMatch(Character::isISOControl)) {
-            throw new IllegalArgumentException("Имя должно быть непустым текстом.");
-        }
-        if (height <= 0) throw new IllegalArgumentException("Рост должен быть положительным.");
-        this.name = name.strip();
-        this.height = height;
-    }
-
-    // Строка с именем и ростом человека.
-    @Override
-    public String toString() {
-        return name + ", рост: " + height;
-    }
-}
-
-// Задание 1.3. Порядок аргументов: фамилия, личное имя, отчество.
-class FullName {
-    private final String surname;
-    private final String firstName;
-    private final String patronymic;
-
-    // Создание имени: достаточно заполнить хотя бы одну часть.
-    public FullName(String surname, String firstName, String patronymic) {
-        this.surname = normalize(surname);
-        this.firstName = normalize(firstName);
-        this.patronymic = normalize(patronymic);
-        if (this.surname.isEmpty() && this.firstName.isEmpty() && this.patronymic.isEmpty()) {
-            throw new IllegalArgumentException("Укажите хотя бы одну часть имени.");
-        }
-    }
-
-    // Убираем пробелы по краям, а отсутствующую часть имени заменяем пустой строкой.
-    private static String normalize(String value) {
-        if (value == null) return "";
-        if (value.codePoints().anyMatch(Character::isISOControl)) {
-            throw new IllegalArgumentException("В имени недопустимы управляющие символы.");
-        }
-        return value.strip();
-    }
-
-    // Собираем имя в одну строку, пропуская незаполненные части.
-    @Override
-    public String toString() {
-        StringJoiner result = new StringJoiner(" ");
-        if (!surname.isEmpty()) result.add(surname);
-        if (!firstName.isEmpty()) result.add(firstName);
-        if (!patronymic.isEmpty()) result.add(patronymic);
-        return result.toString();
-    }
-}
-
-// Задание 2.2: имя хранится объектом FullName.
-class Person {
-    private final FullName name;
-    private final int height;
-
-    // Создание человека с готовым полным именем и ростом.
-    public Person(FullName name, int height) {
-        if (name == null) throw new IllegalArgumentException("Имя не должно быть null.");
-        if (height <= 0) throw new IllegalArgumentException("Рост должен быть положительным.");
-        this.name = name;
-        this.height = height;
-    }
-
-    // Строка с полным именем и ростом человека.
-    @Override
-    public String toString() {
-        return name + ", рост: " + height;
-    }
-}
-
-// Задания 3.3 и 4.8.
-class City {
-    private final String name;
-    private final Map<City, Integer> routes = new LinkedHashMap<>();
-
-    // Создание города только по названию, пока без путей.
-    public City(String name) {
-        this(name, Collections.emptyMap());
-    }
-
-    // Создание города по названию и готовому набору путей.
-    public City(String name, Map<City, Integer> routes) {
-        if (name == null || name.isBlank()
-                || name.codePoints().anyMatch(Character::isISOControl)) {
-            throw new IllegalArgumentException("Название города должно быть непустым текстом.");
-        }
-        if (routes == null) throw new IllegalArgumentException("Набор путей не должен быть null.");
-        this.name = name.strip();
-        for (Map.Entry<City, Integer> route : routes.entrySet()) {
-            if (route.getValue() == null) {
-                throw new IllegalArgumentException("Стоимость не должна быть null.");
+        String[] signs = {"+", "-", "*", "/", "+", "-", "*", "/"};
+        for (int i = 0; i < signs.length; i++) {
+            String expression = f1 + " " + signs[i] + " ";
+            if (i < 4) expression += f2;
+            else expression += number;
+            try {
+                Fraction result;
+                switch (i) {
+                    case 0:
+                        result = f1.sum(f2);
+                        break;
+                    case 1:
+                        result = f1.minus(f2);
+                        break;
+                    case 2:
+                        result = f1.multiply(f2);
+                        break;
+                    case 3:
+                        result = f1.div(f2);
+                        break;
+                    case 4:
+                        result = f1.sum(number);
+                        break;
+                    case 5:
+                        result = f1.minus(number);
+                        break;
+                    case 6:
+                        result = f1.multiply(number);
+                        break;
+                    default:
+                        result = f1.div(number);
+                }
+                System.out.println(expression + " = " + result);
+            } catch (ArithmeticException ex) {
+                System.out.println(expression + ": " + ex.getMessage());
             }
-            addRoute(route.getKey(), route.getValue());
         }
-    }
-
-    // Получение названия города.
-    public String getName() {
-        return name;
-    }
-
-    // Добавление пути в другой город с проверкой стоимости и повторов.
-    public void addRoute(City destination, int cost) {
-        if (destination == null) throw new IllegalArgumentException("Город назначения не задан.");
-        if (destination == this) throw new IllegalArgumentException("Путь в тот же город недопустим.");
-        if (cost < 0) throw new IllegalArgumentException("Стоимость не может быть отрицательной.");
-        if (routes.containsKey(destination)) throw new IllegalArgumentException("Такой путь уже есть.");
-        routes.put(destination, cost);
-    }
-
-    // Строка с названием города, его путями и их стоимостью.
-    @Override
-    public String toString() {
-        StringJoiner result = new StringJoiner(", ", name + " -> [", "]");
-        for (Map.Entry<City, Integer> route : routes.entrySet()) {
-            result.add(route.getKey().name + ":" + route.getValue());
+        try {
+            System.out.println("f1.sum(f2).div(f3).minus(5) = " + f1.sum(f2).div(f3).minus(5));
+        } catch (ArithmeticException ex) {
+            System.out.println("Не удалось вычислить цепочку: " + ex.getMessage());
         }
-        return result.toString();
-    }
-}
-
-// Задание 5.5. BigInteger сохраняет точность при больших числах.
-class Fraction {
-    private final BigInteger numerator;
-    private final BigInteger denominator;
-
-    // Создание дроби из двух обычных целых чисел.
-    public Fraction(int numerator, int denominator) {
-        this(BigInteger.valueOf(numerator), BigInteger.valueOf(denominator));
-    }
-
-    // Создание и сокращение дроби с проверкой знаменателя.
-    public Fraction(BigInteger numerator, BigInteger denominator) {
-        if (numerator == null || denominator == null) {
-            throw new IllegalArgumentException("Числитель и знаменатель должны быть заданы.");
-        }
-        if (denominator.signum() == 0) throw new IllegalArgumentException("Знаменатель равен нулю.");
-        if (denominator.signum() < 0) {
-            numerator = numerator.negate();
-            denominator = denominator.negate();
-        }
-        BigInteger gcd = numerator.gcd(denominator);
-        this.numerator = numerator.divide(gcd);
-        this.denominator = denominator.divide(gcd);
-    }
-
-    // Проверяем, что дробь передали, а не оставили null.
-    private static Fraction checked(Fraction value) {
-        if (value == null) throw new IllegalArgumentException("Дробь не должна быть null.");
-        return value;
-    }
-
-    // Сложение двух дробей.
-    public Fraction sum(Fraction other) {
-        checked(other);
-        return new Fraction(numerator.multiply(other.denominator)
-                .add(other.numerator.multiply(denominator)), denominator.multiply(other.denominator));
-    }
-
-    // Вычитание другой дроби из этой.
-    public Fraction minus(Fraction other) {
-        checked(other);
-        return new Fraction(numerator.multiply(other.denominator)
-                .subtract(other.numerator.multiply(denominator)), denominator.multiply(other.denominator));
-    }
-
-    // Умножение двух дробей.
-    public Fraction multiply(Fraction other) {
-        checked(other);
-        return new Fraction(numerator.multiply(other.numerator), denominator.multiply(other.denominator));
-    }
-
-    // Деление на другую дробь с проверкой деления на ноль.
-    public Fraction div(Fraction other) {
-        checked(other);
-        if (other.numerator.signum() == 0) throw new ArithmeticException("Деление на ноль невозможно.");
-        return new Fraction(numerator.multiply(other.denominator), denominator.multiply(other.numerator));
-    }
-
-    // Прибавление целого числа к дроби.
-    public Fraction sum(int number) { return sum(new Fraction(number, 1)); }
-
-    // Вычитание целого числа из дроби.
-    public Fraction minus(int number) { return minus(new Fraction(number, 1)); }
-
-    // Умножение дроби на целое число.
-    public Fraction multiply(int number) { return multiply(new Fraction(number, 1)); }
-
-    // Деление дроби на целое число.
-    public Fraction div(int number) { return div(new Fraction(number, 1)); }
-
-    // Дробь в виде строки: числитель/знаменатель.
-    @Override
-    public String toString() {
-        return numerator + "/" + denominator;
+        System.out.println("Исходные дроби: f1 = " + f1 + ", f2 = " + f2 + ", f3 = " + f3);
     }
 }
